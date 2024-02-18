@@ -104,16 +104,17 @@ def repl(
 def _old_loop(gpt4all_instance, prompt):
 
     while True:
-        user_input = custom_input(" ⇢  ")
+        user_input = input(" ⇢  ")
         global esc_pressed
         esc_pressed = False
         listener = keyboard.Listener(
             on_press=on_press_esc)
         listener.start()
         # Check if special command and take action
-        if user_input in SPECIAL_COMMANDS:
-            SPECIAL_COMMANDS[user_input](MESSAGES)
-            continue
+        for command in SPECIAL_COMMANDS:
+            if user_input.endswith(command):
+                SPECIAL_COMMANDS[command](MESSAGES)
+                continue
 
         # If regular message, append to messages
         message = prompt + user_input
@@ -151,16 +152,17 @@ def _new_loop(gpt4all_instance, prompt):
 
     with gpt4all_instance.chat_session():
         while True:
-            user_input = custom_input(" ⇢  ")
+            user_input = input(" ⇢  ")
             global esc_pressed
             esc_pressed = False
             listener = keyboard.Listener(
                 on_press=on_press_esc)
             listener.start()
             # Check if special command and take action
-            if user_input in SPECIAL_COMMANDS:
-                SPECIAL_COMMANDS[user_input](MESSAGES)
-                continue
+            for command in SPECIAL_COMMANDS:
+                if user_input.endswith(command):
+                    SPECIAL_COMMANDS[command](MESSAGES)
+                    continue
 
             # If regular message, append to messages
             message = prompt + user_input
@@ -197,25 +199,6 @@ def _new_loop(gpt4all_instance, prompt):
 
 @app.command()
         
-
-def on_press(key):
-    global user_input
-    if hasattr(key, 'char'):
-        user_input += key.char
-    elif key == keyboard.Key.enter:
-        # Stop the listener
-        return False
-
-def custom_input(prompt=''):
-    global user_input
-    user_input = ''
-
-    with keyboard.Listener(on_press=on_press) as listener:
-        print(prompt, end='', flush=True)
-        listener.join()
-
-    return user_input
-    
 def on_press_esc(key):
     global esc_pressed	
     if key == keyboard.Key.esc:
