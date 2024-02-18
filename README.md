@@ -28,3 +28,5 @@ for example:
 ```shell
 python app.py repl --model /home/user/my-gpt4all-models/gpt4all-13b-snoozy-q4_0.gguf --prompt "I am in the jungle"
 ```
+
+Inference can be interrupted using the `Space` key
