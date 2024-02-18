@@ -25,7 +25,7 @@ SPECIAL_COMMANDS = {
     "/reset": lambda messages: messages.clear(),
     "/exit": lambda _: sys.exit(),
     "/clear": lambda _: print("\n" * 100),
-    "/help": lambda _: print("Special commands: /reset, /exit, /help and /clear"),
+    "/help": lambda _: print("Special commands: /reset, /exit, /help and /clear. Press SPACE to stop inference."),
 }
 
 VersionInfo = namedtuple('VersionInfo', ['major', 'minor', 'micro'])
@@ -87,123 +87,67 @@ def repl(
 
     print(CLI_START_MESSAGE)
 
-    use_new_loop = False
-    try:
-        version = importlib.metadata.version('gpt4all')
-        version_major = int(version.split('.')[0])
-        if version_major >= 1:
-            use_new_loop = True
-    except:
-        pass  # fall back to old loop
-    if use_new_loop:
-        _new_loop(gpt4all_instance, prompt)
-    else:
-        _old_loop(gpt4all_instance, prompt)
-
-
-def _old_loop(gpt4all_instance, prompt):
-
-    while True:
-        user_input = input(" ⇢  ")
-        global esc_pressed
-        esc_pressed = False
-        listener = keyboard.Listener(
-            on_press=on_press_esc)
-        listener.start()
-        # Check if special command and take action
-        for command in SPECIAL_COMMANDS:
-            if user_input.endswith(command):
-                SPECIAL_COMMANDS[command](MESSAGES)
-                continue
-
-        # If regular message, append to messages
-        message = prompt + user_input
-        MESSAGES.append({"role": "user", "content": message})
-
-
-        # execute chat completion and ignore the full response since 
-        # we are outputting it incrementally
-        full_response = gpt4all_instance.chat_completion(
-            MESSAGES,
-            # preferential kwargs for chat ux
-            logits_size=0,
-            tokens_size=0,
-            n_past=0,
-            n_ctx=0,
-            n_predict=200,
-            top_k=40,
-            top_p=0.9,
-            temp=0.9,
-            n_batch=9,
-            repeat_penalty=1.1,
-            repeat_last_n=64,
-            context_erase=0.0,
-            # required kwargs for cli ux (incremental response)
-            verbose=False,
-            streaming=True,
-            callback=stop_on_token_callback,
-        )
-        # record assistant's response to messages
-        MESSAGES.append(full_response.get("choices")[0].get("message"))
-        print() # newline before next prompt
+    _new_loop(gpt4all_instance, prompt)
 
 
 def _new_loop(gpt4all_instance, prompt):
 
     with gpt4all_instance.chat_session():
+
+        listener = keyboard.Listener(
+            on_press=on_press_esc)
+        listener.start()
         while True:
             user_input = input(" ⇢  ")
             global esc_pressed
             esc_pressed = False
-            listener = keyboard.Listener(
-                on_press=on_press_esc)
-            listener.start()
             # Check if special command and take action
             for command in SPECIAL_COMMANDS:
                 if user_input.endswith(command):
                     SPECIAL_COMMANDS[command](MESSAGES)
-                    continue
+                    break
+            else:
+                # If regular message, append to messages
+                message = prompt + user_input
+                print(message)
+                MESSAGES.append({"role": "user", "content": message})
 
-            # If regular message, append to messages
-            message = prompt + user_input
-            MESSAGES.append({"role": "user", "content": message})
+                # execute chat completion and ignore the full response since 
+                # we are outputting it incrementally
+                response_generator = gpt4all_instance.generate(
+                    message,
+                    # preferential kwargs for chat ux
+                    max_tokens=200,
+                    temp=0.9,
+                    top_k=40,
+                    top_p=0.9,
+                    repeat_penalty=1.1,
+                    repeat_last_n=64,
+                    n_batch=9,
+                    # required kwargs for cli ux (incremental response)
+                    streaming=True,
+                    callback=stop_on_token_callback,
+                )
+                response = io.StringIO()
+                for token in response_generator:
+                    print(token, end='', flush=True)
+                    response.write(token)
 
-            # execute chat completion and ignore the full response since 
-            # we are outputting it incrementally
-            response_generator = gpt4all_instance.generate(
-                message,
-                # preferential kwargs for chat ux
-                max_tokens=200,
-                temp=0.9,
-                top_k=40,
-                top_p=0.9,
-                repeat_penalty=1.1,
-                repeat_last_n=64,
-                n_batch=9,
-                # required kwargs for cli ux (incremental response)
-                streaming=True,
-                callback=stop_on_token_callback,
-            )
-            response = io.StringIO()
-            for token in response_generator:
-                print(token, end='', flush=True)
-                response.write(token)
-
-            # record assistant's response to messages
-            response_message = {'role': 'assistant', 'content': response.getvalue()}
-            response.close()
-            gpt4all_instance.current_chat_session.append(response_message)
-            MESSAGES.append(response_message)
-            print() # newline before next prompt
+                # record assistant's response to messages
+                response_message = {'role': 'assistant', 'content': response.getvalue()}
+                response.close()
+                gpt4all_instance.current_chat_session.append(response_message)
+                MESSAGES.append(response_message)
+                print() # newline before next prompt
 
 
 @app.command()
         
 def on_press_esc(key):
     global esc_pressed	
-    if key == keyboard.Key.esc:
+    if key == keyboard.Key.space:
         esc_pressed = True
-        return False
+     
             
 # Callback function from GPT-4all
 def stop_on_token_callback(token_id, token_string):
