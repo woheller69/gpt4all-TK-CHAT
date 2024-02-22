@@ -5,6 +5,7 @@ The GPT4All TK GUI is a self-contained script based on the `gpt4all` and `typer`
 REPL to communicate with a language model similar to the chat GUI application, but more basic.
 """
 
+import os
 import importlib.metadata
 import io
 import sys
@@ -168,6 +169,10 @@ def stop():
     
 def exit():
     quit()
+    
+def newchat():
+    python = sys.executable
+    os.execl(python, python, *sys.argv)
 
     
             
@@ -199,10 +204,12 @@ if __name__ == "__main__":
     generate_button = tk.Button(root, text="Generate", command=generate)
     stop_button = tk.Button(root, text="Stop", command=stop)
     exit_button = tk.Button(root, text="Exit", command=exit)
+    newchat_button = tk.Button(root, text="New Chat", command=newchat)
 
     generate_button.pack(side='left', padx=(20, 0))
     stop_button.pack(side='left', padx=(20, 0))
     exit_button.pack(side='right', padx=(0, 20))
+    newchat_button.pack(side='right', padx=(0, 20))
 
     typer.run(repl)
 
