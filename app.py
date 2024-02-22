@@ -166,10 +166,5 @@ def stop_on_token_callback(token_id, token_string):
     else:
         return True
 
-def version():
-    """The CLI version command."""
-    print(f"gpt4all-cli v{VERSION}")
-
-
 if __name__ == "__main__":
     typer.run(repl)
