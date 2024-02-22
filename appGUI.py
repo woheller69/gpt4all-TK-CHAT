@@ -42,13 +42,11 @@ Welcome to the GPT4All TK GUI Version {VERSION}
 # create typer app
 app = typer.Typer()
 
-@app.command()
-
 def repl(
     model: Annotated[
         str,
         typer.Option("--model", "-m", help="Model to use for chatbot"),
-    ] = "mistral-7b-instruct-v0.1.Q4_0.gguf",
+    ] = None,
     n_threads: Annotated[
         int,
         typer.Option("--n-threads", "-t", help="Number of threads to use for chatbot"),
@@ -72,6 +70,11 @@ def repl(
     global output_window
     mPrompt = prompt
     mSysprompt = sysprompt
+    
+    if model is None:
+        print("Specify model with --model or -m")
+        quit()
+        
     """The CLI read-eval-print loop."""
     gpt4all_instance = GPT4All(model, device=device, allow_download=False)
 
@@ -89,18 +92,16 @@ def repl(
         print(f"\nUsing {gpt4all_instance.model.thread_count()} threads", end="")
 
     output_window.insert(tk.END, CLI_START_MESSAGE)
+    output_window.insert(tk.END, "\nModel: "+model)
 
     with gpt4all_instance.chat_session(sysprompt):
         assert gpt4all_instance.current_chat_session[0]['role'] == 'system'
-        output_window.insert(tk.END, "\nSystem prompt template:" + repr(gpt4all_instance.current_chat_session[0]['content']))
-        output_window.insert(tk.END, "\nPrompt template:" + repr(gpt4all_instance._current_prompt_template))
-        output_window.insert(tk.END, "\nPrompt insertion:" + prompt)
+        output_window.insert(tk.END, "\nSystem prompt: " + repr(gpt4all_instance.current_chat_session[0]['content']))
+        output_window.insert(tk.END, "\nPrompt template: " + repr(gpt4all_instance._current_prompt_template))
+        output_window.insert(tk.END, "\nPrompt insertion: " + prompt)
         output_window.insert(tk.END, "\n\n")
         
         root.mainloop()
-
-@app.command()
-
 
 
 def inference(gpt4all_instance, prompt, user_input):
@@ -166,7 +167,7 @@ def stop():
     esc_pressed = True
     
 def exit():
-    sys.exit()
+    quit()
 
     
             
@@ -179,9 +180,6 @@ def stop_on_token_callback(token_id, token_string):
     else:
         return True
 
-def version():
-    """The CLI version command."""
-    print(f"gpt4all-cli v{VERSION}")
 
 def check_for_updates():
     app()
@@ -206,5 +204,5 @@ if __name__ == "__main__":
     stop_button.pack(side='left', padx=(20, 0))
     exit_button.pack(side='right', padx=(0, 20))
 
-    app()
+    typer.run(repl)
 
