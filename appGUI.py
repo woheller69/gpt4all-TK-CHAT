@@ -112,6 +112,8 @@ def inference(gpt4all_instance, prompt, user_input):
     message = prompt + user_input
     # execute chat completion and ignore the full response since 
     # we are outputting it incrementally
+    output_window.insert(tk.END, "\n<<<<<<<<<<< AI <<<<<<<<<<<\n\n")
+    output_window.yview(tk.END) 
     response_generator = gpt4all_instance.generate(
         message,
         # preferential kwargs for chat ux
@@ -127,7 +129,7 @@ def inference(gpt4all_instance, prompt, user_input):
         callback=stop_on_token_callback,
     )
     response = io.StringIO()
-    output_window.insert(tk.END, "\n<<<<<<<<<<< AI <<<<<<<<<<<\n\n")
+
     for token in response_generator:
         output_window.insert(tk.END, token)
         output_window.yview(tk.END)
@@ -149,6 +151,7 @@ def inference_thread():
     output_window.insert(tk.END, "\n>>>>>>>>>> USER >>>>>>>>>>\n\n")
     output_window.insert(tk.END, input_text.get("1.0", "end-1c"))
     output_window.insert(tk.END, "\n\n>>>>>>>>>>>>>>>>>>>>>>>>>>\n\n")
+    output_window.yview(tk.END) 
     message = input_text.get("1.0", "end-1c")
     input_text.delete("1.0", "end") 
     inference(gpt4all_instance, mPrompt, message)
