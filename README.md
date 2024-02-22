@@ -23,10 +23,22 @@ python app.py repl
 By default, it will automatically download the `groovy` model to `.cache/gpt4all/` in your user
 directory, if necessary.
 
-If you have already saved a model beforehand, specify its path with the `-m`/`--model` argument and an optional prompt with `-p`/`--prompt`,
+If you have already saved a model beforehand, specify its path with the `-m`/`--model` argument and an optional prompt with `-p`/`--prompt`, 
 for example:
 ```shell
 python app.py repl --model /home/user/my-gpt4all-models/gpt4all-13b-snoozy-q4_0.gguf --prompt "I am in the jungle"
 ```
+A system prompt can also be set with `-s`/`--sysprompt`
 
-Inference can be interrupted using the `Space` key
+Inference can be interrupted using the `Space` key.
+
+
+# GPT4All TK GUI
+
+In addition there is a version with simple TK GUI. It uses `tkinter` and does not need `pynput`
+
+```shell
+python appGUI.py repl --model /home/user/my-gpt4all-models/gpt4all-13b-snoozy-q4_0.gguf --prompt "I am in the jungle"
+```
+
+
