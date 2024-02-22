@@ -25,7 +25,7 @@ SPECIAL_COMMANDS = {
     "/reset": lambda messages: messages.clear(),
     "/exit": lambda _: sys.exit(),
     "/clear": lambda _: print("\n" * 100),
-    "/help": lambda _: print("Special commands: /reset, /exit, /help and /clear. Press SPACE to stop inference."),
+    "/help": lambda _: print("Special commands: /reset, /exit, /help and /clear. Press SPACE to stop inference.\n"),
 }
 
 VersionInfo = namedtuple('VersionInfo', ['major', 'minor', 'micro'])
@@ -49,12 +49,11 @@ Type /help for special commands.
 # create typer app
 app = typer.Typer()
 
-@app.command()
 def repl(
     model: Annotated[
         str,
         typer.Option("--model", "-m", help="Model to use for chatbot"),
-    ] = "mistral-7b-instruct-v0.1.Q4_0.gguf",
+    ] = None,
     n_threads: Annotated[
         int,
         typer.Option("--n-threads", "-t", help="Number of threads to use for chatbot"),
@@ -65,13 +64,21 @@ def repl(
     ] = None,
     prompt: Annotated[
         str,
-        typer.Option("--prompt", "-p", help="Prompt to use for chatbot"),
+        typer.Option("--prompt", "-p", help="Text to inserted into the prompt template for the chatbot"),
+    ] = "",
+    sysprompt: Annotated[
+        str,
+        typer.Option("--sysprompt", "-s", help="System prompt to use for chatbot"),
     ] = "",
 ):
     """The CLI read-eval-print loop."""
-    gpt4all_instance = GPT4All(model, device=device)
-    print(f"Model {model}")
-    print(f"Prompt {prompt}")
+    
+    if model is None:
+        print("Specify model with --model or -m")
+        quit()
+        
+    gpt4all_instance = GPT4All(model, device=device, allow_download=False)
+
     # if threads are passed, set them
     if n_threads is not None:
         num_threads = gpt4all_instance.model.thread_count()
@@ -86,14 +93,19 @@ def repl(
         print(f"\nUsing {gpt4all_instance.model.thread_count()} threads", end="")
 
     print(CLI_START_MESSAGE)
+    print(f"Model {model}")
 
-    _new_loop(gpt4all_instance, prompt)
+    _new_loop(gpt4all_instance, prompt, sysprompt)
 
 
-def _new_loop(gpt4all_instance, prompt):
+def _new_loop(gpt4all_instance, prompt, sysprompt):
 
-    with gpt4all_instance.chat_session():
-
+    with gpt4all_instance.chat_session(sysprompt):
+        assert gpt4all_instance.current_chat_session[0]['role'] == 'system'
+        print("System prompt template:", repr(gpt4all_instance.current_chat_session[0]['content']))
+        print("Prompt template:", repr(gpt4all_instance._current_prompt_template))
+        print("Prompt insertion:", prompt)
+        
         listener = keyboard.Listener(
             on_press=on_press_esc)
         listener.start()
@@ -109,21 +121,19 @@ def _new_loop(gpt4all_instance, prompt):
             else:
                 # If regular message, append to messages
                 message = prompt + user_input
-                print(message)
                 MESSAGES.append({"role": "user", "content": message})
-
                 # execute chat completion and ignore the full response since 
                 # we are outputting it incrementally
                 response_generator = gpt4all_instance.generate(
                     message,
                     # preferential kwargs for chat ux
-                    max_tokens=200,
-                    temp=0.9,
+                    max_tokens=20000,
+                    temp=0.7,
                     top_k=40,
-                    top_p=0.9,
-                    repeat_penalty=1.1,
+                    top_p=0.4,
+                    repeat_penalty=1.18,
                     repeat_last_n=64,
-                    n_batch=9,
+                    n_batch=128,
                     # required kwargs for cli ux (incremental response)
                     streaming=True,
                     callback=stop_on_token_callback,
@@ -140,8 +150,6 @@ def _new_loop(gpt4all_instance, prompt):
                 MESSAGES.append(response_message)
                 print() # newline before next prompt
 
-
-@app.command()
         
 def on_press_esc(key):
     global esc_pressed	
@@ -164,4 +172,4 @@ def version():
 
 
 if __name__ == "__main__":
-    app()
+    typer.run(repl)
