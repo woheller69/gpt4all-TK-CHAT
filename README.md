@@ -21,6 +21,8 @@ A system prompt can also be set with `-s`/`--sysprompt`.
 ```shell
 python appGUI.py --model /home/user/my-gpt4all-models/gpt4all-13b-snoozy-q4_0.gguf --prompt "I am in the jungle"
 ```
+
+Input your request in the bottom window and click "Generate".
 <img src="01.png" width="250"/> 
 
 
