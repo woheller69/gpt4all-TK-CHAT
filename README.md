@@ -17,6 +17,7 @@ python -m pip install --upgrade gpt4all typer tkinter
 ```
 Specify the path to the model with the `-m`/`--model` argument and an optional prompt with `-p`/`--prompt`. 
 A system prompt can also be set with `-s`/`--sysprompt`.
+Context length defaults to 2048, it can be set with `-c`/`--context-length`
 
 ```shell
 python appGUI.py --model /home/user/my-gpt4all-models/gpt4all-13b-snoozy-q4_0.gguf --prompt "I am in the jungle"
