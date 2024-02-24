@@ -70,6 +70,10 @@ def repl(
         str,
         typer.Option("--sysprompt", "-s", help="System prompt to use for chatbot"),
     ] = "",
+    ctx: Annotated[
+        int,
+        typer.Option("--context-length", "-c", help="Context length"),
+    ] = 2048,
 ):
     """The CLI read-eval-print loop."""
     
@@ -77,7 +81,7 @@ def repl(
         print("Specify model with --model or -m")
         quit()
         
-    gpt4all_instance = GPT4All(model, device=device, allow_download=False)
+    gpt4all_instance = GPT4All(model, device=device, allow_download=False, n_ctx=ctx)
 
     # if threads are passed, set them
     if n_threads is not None:
@@ -105,6 +109,7 @@ def _new_loop(gpt4all_instance, prompt, sysprompt):
         print("System prompt template:", repr(gpt4all_instance.current_chat_session[0]['content']))
         print("Prompt template:", repr(gpt4all_instance._current_prompt_template))
         print("Prompt insertion:", prompt)
+        print("Context length:", repr(gpt4all_instance.model.n_ctx))
         
         listener = keyboard.Listener(
             on_press=on_press_esc)
