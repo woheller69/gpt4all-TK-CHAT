@@ -1,4 +1,4 @@
-# GPT4All TK GUI
+# GPT4All TK CHAT GUI
 
 ## Quickstart
 
