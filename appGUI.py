@@ -85,19 +85,11 @@ def repl(
 
     # if threads are passed, set them
     if n_threads is not None:
-        num_threads = gpt4all_instance.model.thread_count()
-        print(f"\nAdjusted: {num_threads} →", end="")
-
-        # set number of threads
         gpt4all_instance.model.set_thread_count(n_threads)
-
-        num_threads = gpt4all_instance.model.thread_count()
-        print(f" {num_threads} threads", end="", flush=True)
-    else:
-        print(f"\nUsing {gpt4all_instance.model.thread_count()} threads", end="")
 
     output_window.insert(tk.END, CLI_START_MESSAGE)
     output_window.insert(tk.END, "\nModel: "+model)
+    output_window.insert(tk.END, "\nUsing " + repr(gpt4all_instance.model.thread_count()) + " threads")
 
     with gpt4all_instance.chat_session(sysprompt):
         assert gpt4all_instance.current_chat_session[0]['role'] == 'system'
@@ -106,7 +98,7 @@ def repl(
         output_window.insert(tk.END, "\nPrompt insertion: " + prompt)
         output_window.insert(tk.END, "\nContext length: " + repr(gpt4all_instance.model.n_ctx))
         output_window.insert(tk.END, "\n\n")
-        
+        root.after(10, lambda: input_text.focus_set())
         root.mainloop()
 
 
