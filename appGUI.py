@@ -17,6 +17,7 @@ from gpt4all import GPT4All
 import tkinter as tk
 from tkinter import scrolledtext
 import threading
+import time
 gpt4all_instance = None
 prompt = None
 sysprompt = None
@@ -128,14 +129,20 @@ def inference(gpt4all_instance, prompt, user_input):
         callback=stop_on_token_callback,
     )
     response = io.StringIO()
+    token_count = 0
+    start_time = time.time()
 
     for token in response_generator:
         output_window.insert(tk.END, token)
         output_window.yview(tk.END)
         response.write(token)
         root.update_idletasks()
-        
-    output_window.insert(tk.END, "\n\n<<<<<<<<<<<<<<<<<<<<<<<<<<\n\n")
+        token_count += 1
+                
+    end_time = time.time()
+    tokens_per_second = token_count / (end_time - start_time)
+    output_window.insert(tk.END, f"\n\nTokens/second: {tokens_per_second:.2f}")                
+    output_window.insert(tk.END, "\n<<<<<<<<<<<<<<<<<<<<<<<<<<\n\n")
     output_window.yview(tk.END)    
     response_message = {'role': 'assistant', 'content': response.getvalue()}
     response.close()
