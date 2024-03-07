@@ -172,6 +172,8 @@ def stop():
     esc_pressed = True
     
 def exit():
+    global gpt4all_instance
+    del gpt4all_instance
     quit()
     
 def newchat():
