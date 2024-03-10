@@ -24,10 +24,12 @@ python appGUI.py --model /home/user/my-gpt4all-models/gpt4all-13b-snoozy-q4_0.gg
 
 (or --prompt $'Human:\n{0}\n Assistant:\n' with line breaks)
 ```
-Input your request in the bottom window and click "Generate".
+Input your request in the bottom window and click ```Generate```.
+
+Inference can be interrupted using the ``Stop`` button.
 
 <img src="01.png" width="250"/> 
-Inference can be interrupted using the `Space` key.
+
 
 
 
