@@ -59,8 +59,8 @@ def repl(
     ] = None,
     prompt: Annotated[
         str,
-        typer.Option("--prompt", "-p", help="Text to inserted into the prompt template for the chatbot"),
-    ] = "",
+        typer.Option("--prompt", "-p", help="Prompt template for the chatbot. Placeholder for user input: {0} "),
+    ] = None,
     sysprompt: Annotated[
         str,
         typer.Option("--sysprompt", "-s", help="System prompt to use for chatbot"),
@@ -71,10 +71,8 @@ def repl(
     ] = 2048,
 ):
     global gpt4all_instance
-    global mPrompt
     global mSysprompt
     global output_window
-    mPrompt = prompt
     mSysprompt = sysprompt
     
     if model is None:
@@ -83,6 +81,7 @@ def repl(
         
     """The CLI read-eval-print loop."""
     gpt4all_instance = GPT4All(model, device=device, allow_download=False, n_ctx=ctx)
+        
 
     # if threads are passed, set them
     if n_threads is not None:
@@ -92,24 +91,32 @@ def repl(
     output_window.insert(tk.END, "\nModel: "+model)
     output_window.insert(tk.END, "\nUsing " + repr(gpt4all_instance.model.thread_count()) + " threads")
 
-    with gpt4all_instance.chat_session(sysprompt):
-        assert gpt4all_instance.current_chat_session[0]['role'] == 'system'
-        output_window.insert(tk.END, "\nSystem prompt: " + repr(gpt4all_instance.current_chat_session[0]['content']))
-        output_window.insert(tk.END, "\nPrompt template: " + repr(gpt4all_instance._current_prompt_template))
-        output_window.insert(tk.END, "\nPrompt insertion: " + prompt)
-        output_window.insert(tk.END, "\nContext length: " + repr(gpt4all_instance.model.n_ctx))
-        output_window.insert(tk.END, "\n\n")
-        root.after(10, lambda: input_text.focus_set())
-        root.mainloop()
+    if prompt is None:
+        with gpt4all_instance.chat_session(sysprompt):
+            assert gpt4all_instance.current_chat_session[0]['role'] == 'system'
+            output_window.insert(tk.END, "\nSystem prompt: " + repr(gpt4all_instance.current_chat_session[0]['content']))
+            output_window.insert(tk.END, "\nPrompt template: " + repr(gpt4all_instance._current_prompt_template))
+            output_window.insert(tk.END, "\nContext length: " + repr(gpt4all_instance.model.n_ctx))
+            output_window.insert(tk.END, "\n\n")
+            root.after(10, lambda: input_text.focus_set())
+            root.mainloop()
+    else:        
+        with gpt4all_instance.chat_session(sysprompt, prompt):
+            assert gpt4all_instance.current_chat_session[0]['role'] == 'system'
+            output_window.insert(tk.END, "\nSystem prompt: " + repr(gpt4all_instance.current_chat_session[0]['content']))
+            output_window.insert(tk.END, "\nPrompt template: " + repr(gpt4all_instance._current_prompt_template))
+            output_window.insert(tk.END, "\nContext length: " + repr(gpt4all_instance.model.n_ctx))
+            output_window.insert(tk.END, "\n\n")
+            root.after(10, lambda: input_text.focus_set())
+            root.mainloop()
 
-
-def inference(gpt4all_instance, prompt, user_input):
+def inference(gpt4all_instance, user_input):
     global output_window
 
     global esc_pressed
     esc_pressed = False
         
-    message = prompt + user_input
+    message = user_input
     # execute chat completion and ignore the full response since 
     # we are outputting it incrementally
     output_window.insert(tk.END, "\n<<<<<<<<<<< AI <<<<<<<<<<<\n\n")
@@ -150,7 +157,6 @@ def inference(gpt4all_instance, prompt, user_input):
 
 def inference_thread():
     global gpt4all_instance
-    global mPrompt
     global input_text
     global output_window
     # Copy and paste into output window
@@ -160,7 +166,7 @@ def inference_thread():
     output_window.yview(tk.END) 
     message = input_text.get("1.0", "end-1c")
     input_text.delete("1.0", "end") 
-    inference(gpt4all_instance, mPrompt, message)
+    inference(gpt4all_instance, message)
 
 
 def generate():
