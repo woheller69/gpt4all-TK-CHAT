@@ -29,7 +29,7 @@ Input your request in the bottom window and click ```Generate```.
 
 Inference can be interrupted using the ``Stop`` button.
 
-<img src="01.png" width="250"/> 
+<img src="01.png" width="600"/> 
 
 
 
