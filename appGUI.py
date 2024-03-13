@@ -23,6 +23,7 @@ prompt = None
 sysprompt = None
 output_window = None
 input_text = None
+esc_pressed = False
 
 VersionInfo = namedtuple('VersionInfo', ['major', 'minor', 'micro'])
 VERSION_INFO = VersionInfo(1, 0, 0)
@@ -155,7 +156,7 @@ def inference(gpt4all_instance, user_input):
     response.close()
     gpt4all_instance.current_chat_session.append(response_message)
 
-def inference_thread():
+def init_inference():
     global gpt4all_instance
     global input_text
     global output_window
@@ -170,8 +171,8 @@ def inference_thread():
 
 
 def generate():
-    newthread = threading.Thread(target=inference_thread)
-    newthread.start()
+    inference_thread = threading.Thread(target=init_inference)
+    inference_thread.start()
 
 def stop():
     global esc_pressed 
