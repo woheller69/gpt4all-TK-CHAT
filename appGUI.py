@@ -184,6 +184,8 @@ def exit():
     quit()
     
 def newchat():
+    global gpt4all_instance
+    del gpt4all_instance
     python = sys.executable
     os.execl(python, python, *sys.argv)
 
@@ -198,13 +200,17 @@ def stop_on_token_callback(token_id, token_string):
     else:
         return True
 
-
-def check_for_updates():
-    app()
+def on_closing():
+    global gpt4all_instance
+    del gpt4all_instance
+    root.destroy()
 
 if __name__ == "__main__":
     # Setup Tkinter GUI
     root = tk.Tk()
+
+    root.protocol("WM_DELETE_WINDOW", on_closing)
+    
     root.title('GPT4ALL TK GUI')
     root.geometry("1024x768")
 
@@ -225,4 +231,3 @@ if __name__ == "__main__":
     newchat_button.pack(side='right', padx=(0, 20))
 
     typer.run(repl)
-
