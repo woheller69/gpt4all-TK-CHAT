@@ -129,6 +129,7 @@ def inference(gpt4all_instance, user_input):
         temp=0.7,
         top_k=40,
         top_p=0.4,
+        min_p=0.0,
         repeat_penalty=1.18,
         repeat_last_n=64,
         n_batch=128,
