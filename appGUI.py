@@ -1,9 +1,4 @@
 #!/usr/bin/env python3
-"""GPT4All TK GUI
-
-The GPT4All TK GUI is a self-contained script based on the `gpt4all` and `typer` packages. It offers a
-REPL to communicate with a language model similar to the chat GUI application, but more basic.
-"""
 
 import os
 import importlib.metadata
@@ -45,7 +40,7 @@ Welcome to the GPT4All TK GUI Version {VERSION}
 # create typer app
 app = typer.Typer()
 
-def repl(
+def opt(
     model: Annotated[
         str,
         typer.Option("--model", "-m", help="Model to use for chatbot"),
@@ -115,6 +110,7 @@ def inference(gpt4all_instance, user_input):
     global output_window
 
     global esc_pressed
+    start_time = time.time()
     esc_pressed = False
         
     message = user_input
@@ -139,7 +135,6 @@ def inference(gpt4all_instance, user_input):
     )
     response = io.StringIO()
     token_count = 0
-    start_time = time.time()
 
     for token in response_generator:
         output_window.insert(tk.END, token)
@@ -147,10 +142,14 @@ def inference(gpt4all_instance, user_input):
         response.write(token)
         root.update_idletasks()
         token_count += 1
+        if token_count == 1:
+            prompt_eval_time = time.time() - start_time 
+            start_time = time.time()  
                 
     end_time = time.time()
-    tokens_per_second = token_count / (end_time - start_time)
-    output_window.insert(tk.END, f"\n\nTokens/second: {tokens_per_second:.2f}")                
+    tokens_per_second = (token_count -1) / (end_time - start_time)
+    output_window.insert(tk.END, f"\n\nPrompt evaluation: {prompt_eval_time:.2f} seconds")     
+    output_window.insert(tk.END, f"\nTokens: {token_count}  Tokens/second: {tokens_per_second:.2f}")                
     output_window.insert(tk.END, "\n<<<<<<<<<<<<<<<<<<<<<<<<<<\n\n")
     output_window.yview(tk.END)    
     response_message = {'role': 'assistant', 'content': response.getvalue()}
@@ -231,4 +230,4 @@ if __name__ == "__main__":
     exit_button.pack(side='right', padx=(0, 20))
     newchat_button.pack(side='right', padx=(0, 20))
 
-    typer.run(repl)
+    typer.run(opt)
