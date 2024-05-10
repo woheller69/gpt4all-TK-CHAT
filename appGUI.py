@@ -116,7 +116,7 @@ def inference(gpt4all_instance, user_input):
     message = user_input
     # execute chat completion and ignore the full response since 
     # we are outputting it incrementally
-    output_window.insert(tk.END, "\n<<<<<<<<<<< AI <<<<<<<<<<<\n\n")
+    output_window.insert(tk.END, "\n<<<<<<<<<<<<< AI <<<<<<<<<<<<<\n\n")
     output_window.yview(tk.END) 
     response_generator = gpt4all_instance.generate(
         message,
@@ -150,7 +150,7 @@ def inference(gpt4all_instance, user_input):
     tokens_per_second = (token_count -1) / (end_time - start_time)
     output_window.insert(tk.END, f"\n\nPrompt evaluation: {prompt_eval_time:.2f} seconds")     
     output_window.insert(tk.END, f"\nTokens: {token_count}  Tokens/second: {tokens_per_second:.2f}")                
-    output_window.insert(tk.END, "\n<<<<<<<<<<<<<<<<<<<<<<<<<<\n\n")
+    output_window.insert(tk.END, "\n<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<\n\n")
     output_window.yview(tk.END)    
     response_message = {'role': 'assistant', 'content': response.getvalue()}
     response.close()
@@ -161,9 +161,9 @@ def init_inference():
     global input_text
     global output_window
     # Copy and paste into output window
-    output_window.insert(tk.END, "\n>>>>>>>>>> USER >>>>>>>>>>\n\n")
+    output_window.insert(tk.END, "\n>>>>>>>>>>>> USER >>>>>>>>>>>>\n\n")
     output_window.insert(tk.END, input_text.get("1.0", "end-1c"))
-    output_window.insert(tk.END, "\n\n>>>>>>>>>>>>>>>>>>>>>>>>>>\n\n")
+    output_window.insert(tk.END, "\n\n>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n\n")
     output_window.yview(tk.END) 
     message = input_text.get("1.0", "end-1c")
     input_text.delete("1.0", "end") 
