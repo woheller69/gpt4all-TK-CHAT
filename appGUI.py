@@ -37,6 +37,7 @@ class ChatGUI:
         self.esc_pressed = False
         self.root = None
         self.inference_thread = None
+        self.chatsession = None
 
     def opt(self,
         model: Annotated[str, typer.Option("--model", "-m", help="Model to use for chatbot")] = None,
@@ -58,8 +59,6 @@ class ChatGUI:
         self.model_path = model
 
         self.run()
-    
-    
     
     
     def run(self):
@@ -88,28 +87,32 @@ class ChatGUI:
         # if threads are passed, set them
         if self.threads is not None:
             self.gpt4all_instance.model.set_thread_count(self.threads)
+       
+    
+        self.new_chat_session()
         
+        self.root.mainloop()
+        
+    def new_chat_session(self):   
+        if self.chatsession is not None:
+            self.chatsession.__exit__(None, None, None)
+            
+        if self.prompt is None:
+            self.chatsession = self.gpt4all_instance.chat_session(self.sysprompt)
+        else:
+            self.chatsession = self.gpt4all_instance.chat_session(self.sysprompt, self.prompt)
+        
+        self.chatsession.__enter__()
+        self.output_window.delete('1.0', tk.END)
         self.output_window.insert(tk.END, CLI_START_MESSAGE)
         self.output_window.insert(tk.END, "\nModel: " + self.model_path)
         self.output_window.insert(tk.END, "\nUsing " + repr(self.gpt4all_instance.model.thread_count())  + " threads")
         self.output_window.insert(tk.END, "\nContext length: " + repr(self.context))
         self.root.after(10, lambda: self.input_text.focus_set())
-    
-
-        if self.prompt is None:
-            with self.gpt4all_instance.chat_session(self.sysprompt):
-                assert self.gpt4all_instance.current_chat_session[0]['role'] == 'system'
-                self.output_window.insert(tk.END, "\nSystem prompt: " + repr(self.gpt4all_instance.current_chat_session[0]['content']))
-                self.output_window.insert(tk.END, "\nPrompt template: " + repr(self.gpt4all_instance._current_prompt_template))
-                self.output_window.insert(tk.END, "\n\n")
-                self.root.mainloop()
-        else:        
-            with self.gpt4all_instance.chat_session(self.sysprompt, self.prompt):
-                assert self.gpt4all_instance.current_chat_session[0]['role'] == 'system'
-                self.output_window.insert(tk.END, "\nSystem prompt: " + repr(self.gpt4all_instance.current_chat_session[0]['content']))
-                self.output_window.insert(tk.END, "\nPrompt template: " + repr(self.gpt4all_instance._current_prompt_template))
-                self.output_window.insert(tk.END, "\n\n")
-                self.root.mainloop()
+        assert self.gpt4all_instance.current_chat_session[0]['role'] == 'system'
+        self.output_window.insert(tk.END, "\nSystem prompt: " + repr(self.gpt4all_instance.current_chat_session[0]['content']))
+        self.output_window.insert(tk.END, "\nPrompt template: " + repr(self.gpt4all_instance._current_prompt_template))
+        self.output_window.insert(tk.END, "\n\n")
 
     def inference(self, user_input):
         start_time = time.time()
@@ -135,13 +138,12 @@ class ChatGUI:
             streaming=True,
             callback=self.stop_on_token_callback,
         )
-        response = io.StringIO()
+        
         token_count = 0
 
         for token in response_generator:
             self.output_window.insert(tk.END, token)
             self.output_window.yview(tk.END)
-            response.write(token)
             self.root.update_idletasks()
             token_count += 1
             if token_count == 1:
@@ -149,14 +151,14 @@ class ChatGUI:
                 start_time = time.time()  
                 
         end_time = time.time()
-        tokens_per_second = (token_count -1) / (end_time - start_time)
-        self.output_window.insert(tk.END, f"\n\nPrompt evaluation: {prompt_eval_time:.2f} seconds")     
-        self.output_window.insert(tk.END, f"\nTokens: {token_count}  Tokens/second: {tokens_per_second:.2f}")                
+        if token_count > 1:
+            tokens_per_second = (token_count -1) / (end_time - start_time)
+            self.output_window.insert(tk.END, f"\n\nPrompt evaluation: {prompt_eval_time:.2f} seconds")     
+            self.output_window.insert(tk.END, f"\nTokens: {token_count}  Tokens/second: {tokens_per_second:.2f}")                
         self.output_window.insert(tk.END, "\n<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<\n\n")
         self.output_window.yview(tk.END)    
-        response_message = {'role': 'assistant', 'content': response.getvalue()}
-        response.close()
-        self.gpt4all_instance.current_chat_session.append(response_message)
+        #print(self.gpt4all_instance.current_chat_session)
+        #print("\n")
         self.inference_thread = None
 
     def init_inference(self):
@@ -183,10 +185,8 @@ class ChatGUI:
         quit()
     
     def newchat(self):
-        del self.gpt4all_instance
-        python = sys.executable
-        os.execl(python, python, *sys.argv)
-
+        if self.inference_thread is None:
+            self.new_chat_session()
             
     # Callback function from GPT-4all
     def stop_on_token_callback(self, token_id, token_string):
