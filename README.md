@@ -18,7 +18,7 @@ python -m pip install --upgrade gpt4all typer tkinter
 Specify the path to the model with the `-m`/`--model` argument and an optional prompt template with `-p`/`--prompt`. 
 A system prompt can also be set with `-s`/`--sysprompt`.
 Context length defaults to 2048, it can be set with `-c`/`--context-length`. The number of threads can be set with `-t`/`--n-threads`.
-The device to use, e.g. gpu, amd, nvidia, intel, can be set with `-d`/`--device`. It defaults to CPU.
+The device to use, e.g. gpu, amd, nvidia, intel, can be set with `-d`/`--device`. It defaults to CPU. `--temperature` can be used to set the temperature.
 
 ```shell
 python appGUI.py --model /home/user/my-gpt4all-models/gpt4all-13b-snoozy-q4_0.gguf --prompt 'Human: {0} Assistant: '
