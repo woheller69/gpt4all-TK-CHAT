@@ -38,10 +38,12 @@ class ChatGUI:
         self.root = None
         self.inference_thread = None
         self.chatsession = None
+        self.temperature = 0
 
     def opt(self,
         model: Annotated[str, typer.Option("--model", "-m", help="Model to use for chatbot")] = None,
         n_threads: Annotated[int, typer.Option("--n-threads", "-t", help="Number of threads to use for chatbot")] = None,
+        temperature: Annotated[float, typer.Option("--temperature", help="Temperature to use for chatbot")] = 0.65,
         device: Annotated[str, typer.Option("--device", "-d", help="Device to use for chatbot, e.g. gpu, amd, nvidia, intel. Defaults to CPU.")] = None,
         prompt: Annotated[str, typer.Option("--prompt", "-p", help="Prompt template for the chatbot. Placeholder for user input: {0} ")] = None,
         sysprompt: Annotated[str, typer.Option("--sysprompt", "-s", help="System prompt to use for chatbot")] = "",
@@ -57,9 +59,9 @@ class ChatGUI:
         self.threads = n_threads
         self.device = device
         self.model_path = model
+        self.temperature = temperature
 
         self.run()
-    
     
     def run(self):
         self.root = tk.Tk()
@@ -87,7 +89,6 @@ class ChatGUI:
         # if threads are passed, set them
         if self.threads is not None:
             self.gpt4all_instance.model.set_thread_count(self.threads)
-       
     
         self.new_chat_session()
         
@@ -107,6 +108,7 @@ class ChatGUI:
         self.output_window.insert(tk.END, CLI_START_MESSAGE)
         self.output_window.insert(tk.END, "\nModel: " + self.model_path)
         self.output_window.insert(tk.END, "\nUsing " + repr(self.gpt4all_instance.model.thread_count())  + " threads")
+        self.output_window.insert(tk.END, "\nTemperature: " + repr(self.temperature))
         self.output_window.insert(tk.END, "\nContext length: " + repr(self.context))
         self.root.after(10, lambda: self.input_text.focus_set())
         assert self.gpt4all_instance.current_chat_session[0]['role'] == 'system'
@@ -127,7 +129,7 @@ class ChatGUI:
             message,
             # preferential kwargs for chat ux
             max_tokens=20000,
-            temp=0.7,
+            temp=self.temperature,
             top_k=40,
             top_p=0.4,
             min_p=0.0,
@@ -151,9 +153,10 @@ class ChatGUI:
                 start_time = time.time()  
                 
         end_time = time.time()
+
+        self.output_window.insert(tk.END, f"\n\nPrompt evaluation: {prompt_eval_time:.2f} seconds")   
         if token_count > 1:
-            tokens_per_second = (token_count -1) / (end_time - start_time)
-            self.output_window.insert(tk.END, f"\n\nPrompt evaluation: {prompt_eval_time:.2f} seconds")     
+            tokens_per_second = (token_count -1) / (end_time - start_time)  
             self.output_window.insert(tk.END, f"\nTokens: {token_count}  Tokens/second: {tokens_per_second:.2f}")                
         self.output_window.insert(tk.END, "\n<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<\n\n")
         self.output_window.yview(tk.END)    
